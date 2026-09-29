@@ -4,7 +4,7 @@ NFAI Labs is being built as an AI intelligence, benchmarking, comparison, and re
 
 The project is developed in strict phases. See [`docs/PHASES.md`](docs/PHASES.md) for the roadmap and current status, and [`AGENTS.md`](AGENTS.md) for the rules every contributor and coding agent follows.
 
-> **Status:** Application foundation (Phase 1). The site contains placeholder pages only. No model data, benchmark results, prices, or rankings are published.
+> **Status:** Application foundation (Phase 1). Preview deployment: https://nfai-labs.vercel.app/. The site contains placeholder pages only. No model data, benchmark results, prices, or rankings are published.
 
 ## Requirements
 

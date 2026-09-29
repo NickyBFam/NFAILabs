@@ -5,7 +5,7 @@
 | Document | Phases & Roadmap |
 | Phase | Phase 0 — Product Specification & Architecture |
 | Status | Approved by owner 2026-09-29 (Phase 0 baseline) |
-| Current approved phase | **Phase 1 — Application Foundation**: approved to begin by the owner on 2026-09-29. Implementation awaits owner review; Phase 1 is **not** yet approved as complete. Phase 0 is approved and closed (baseline `4d3e2ef`). |
+| Current approved phase | **Phase 1 — Application Foundation**: approved to begin by the owner on 2026-09-29. Implementation is complete and every acceptance criterion is met; Phase 1 is **ready for owner approval** but not yet approved as complete. Phase 2 has not been approved to begin. Phase 0 is approved and closed (baseline `4d3e2ef`). |
 | Canonical branch | `main` (D-017) |
 | Last updated | 2026-09-29 |
 
@@ -66,11 +66,23 @@
 - **Acceptance criteria:** Clean install and build; lint/type/test pass in CI; placeholder pages clearly marked as placeholders with no fake data; Lighthouse/accessibility baseline recorded.
 - **Tests/review:** Smoke tests for routes; CI run; owner review of structure.
 - **Completion gate:** Owner approval; baseline tooling documented.
-- **Implementation status (2026-09-29): implemented and validated locally, awaiting owner review. Not approved.**
-  - Built from Phase 0 baseline `4d3e2ef`. Stack and tooling decisions: D-019 to D-024 (Proposed).
-  - Delivered: Next.js 16 App Router app in `src/`, strict TypeScript, Tailwind CSS v4 design tokens, responsive shell (header, desktop and mobile navigation, footer, skip link), foundation homepage, 12 placeholder product-area routes, metadata/canonical/robots/sitemap foundation, `not-found`, `error`, and `global-error` handling, baseline security headers, ESLint, Prettier, Vitest test suite, GitHub Actions CI workflow, `.env.example`, `README.md`.
-  - Validated locally: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`, and `npm run build` all pass; production server smoke-checked (all routes render, 404 works, headers present, `noindex` by default); mobile menu keyboard behavior checked in a browser at 375 px width.
-  - Outstanding before approval: CI has not run yet (runs after the owner pushes); no preview deployment exists yet (Vercel project not connected); a Lighthouse report has not been recorded; the end-to-end test harness named in scope is deferred (D-022).
+- **Implementation status (2026-09-29): implementation complete, all acceptance criteria met, ready for owner approval.** Phase 1 is not closed until the owner approves it and commits the final Phase 1 baseline.
+  - Built from Phase 0 baseline `4d3e2ef`. Implementation commit `03c3874`; lockfile fixes `34c8e45` and `0a64d9f`. Stack and tooling decisions D-019 to D-024 are Accepted.
+  - Delivered: Next.js 16 App Router app in `src/`, strict TypeScript, Tailwind CSS v4 design tokens, responsive shell (header, desktop and mobile navigation, footer, skip link), foundation homepage, 12 product-area routes (10 placeholders plus Methodology and About), metadata/canonical/robots/sitemap foundation, `not-found`, `error`, and `global-error` handling, baseline security headers, ESLint, Prettier, Vitest test suite, GitHub Actions CI workflow, `.env.example`, `README.md`.
+  - **CI:** GitHub Actions workflow `CI` is green for commit `0a64d9f` (run 36607887637, push event, 2026-09-29): install, lint, format check, typecheck, test, and build all succeeded.
+  - **Preview deployment:** https://nfai-labs.vercel.app/ (Vercel). Validated on 2026-09-29: all 13 routes return 200 and render; unknown routes return 404 with the custom page; `robots.txt` disallows all and every page emits `noindex, nofollow` (D-024); `sitemap.xml` lists the 13 static routes with absolute URLs; security headers from D-023 are present (plus Vercel's HSTS); desktop and mobile navigation work (mobile menu opens, lists all areas, closes on navigation); no horizontal overflow at 375 px or 1280 px; no console errors on page loads; placeholder routes show the "Not yet available" notice; no model, provider, price, benchmark, or ranking data is present.
+  - **Lighthouse baseline** (Lighthouse 13.5.0 CLI, mobile form factor with default simulated throttling, headless Microsoft Edge 154 (Chromium) on Windows 11, 2026-09-29, deployed site, median of 3 runs per route; scores were identical across runs):
+
+    | Route | Performance | Accessibility | Best Practices | SEO |
+    |---|---|---|---|---|
+    | `/` | 100 | 100 | 100 | 66 |
+    | `/methodology` | 100 | 100 | 100 | 66 |
+    | `/models` | 100 | 100 | 100 | 66 |
+
+    Findings: the only failing scored audit is SEO `is-crawlable`, caused by the intentional `noindex` and `robots.txt` disallow (D-024); SEO is expected to score 100 once indexing is enabled. Mobile metrics were FCP 0.8 s, LCP 1.5 to 1.6 s, TBT 10 to 20 ms, CLS 0, Speed Index 0.8 s. Lighthouse checks are automated and cover only part of accessibility; they are not a WCAG conformance audit.
+  - **Performance budgets** (mobile Lighthouse, deployed site), based on Core Web Vitals "good" thresholds: Performance score ≥ 90, LCP ≤ 2.5 s, CLS ≤ 0.1, TBT ≤ 200 ms. The Phase 1 baseline is within all of them.
+  - Validated locally: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`, and `npm run build` all pass.
+  - Deferred by accepted decision: end-to-end browser tests (D-022) and a Content-Security-Policy (D-023).
 
 ## Phase 2 — Database & Data Architecture
 - **Objective:** Implement the physical data model reflecting `MASTER_SPEC.md` §3 with history and provenance.

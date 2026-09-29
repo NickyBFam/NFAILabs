@@ -3,7 +3,7 @@
 These rules apply to every AI coding agent or assistant working in this repository. They override convenience. When in doubt, stop and ask the owner.
 
 **Owner:** Nicolas Familia (GitHub `NickyBFam`)
-**Current approved phase:** Phase 1 — Application Foundation (approved to begin 2026-09-29; awaiting owner review, not yet complete). Phase 0 is approved and closed. The authoritative status is in `docs/PHASES.md`.
+**Current approved phase:** Phase 1 — Application Foundation (approved to begin 2026-09-29; implementation complete and ready for owner approval, not yet closed). Phase 2 has not been approved to begin. Phase 0 is approved and closed. The authoritative status is in `docs/PHASES.md`.
 **Canonical branch:** `main` (configured by the owner; see `docs/DECISIONS.md` D-017)
 **License:** All rights reserved (D-018)
 
