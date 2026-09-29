@@ -79,6 +79,7 @@ Key property: **the public website and API are read-mostly views over approved d
 - Migrations in version control; no schema changes outside migrations.
 - Row Level Security for any table exposed through Supabase APIs; public reads limited to published views.
 - Separation of concerns: raw/ingested data, proposed changes, published facts, derived data, and audit logs are distinct.
+- **Phase 2 implementation (accepted by the owner 2026-09-29; validated on a real Supabase development project):** plain SQL migrations in `supabase/migrations/` targeting PostgreSQL 17 (D-026). Catalog, measurement and pricing tables share one publication lifecycle (`publication_state`: draft → validated → published, plus extracted, rejected, superseded, withdrawn; D-027) enforced by triggers, with provenance required before validation or publication (D-028), supersession for corrections, `publication_events` for record-time history and an internal `audit_log`. Published effective periods cannot overlap (D-029). The API roles read only the public record through grants plus RLS, and the service role is server-only (D-030). The website reaches the database only through the typed data-access layer in `src/lib/data` (clients, repositories, mappers, pure history queries). Schema map and conventions: `DATABASE.md`. Derived, editorial and ingestion-workflow tables are not built yet; they arrive with their phases as new migrations.
 
 ### 3.4 Ingestion workers
 - Implement the pipeline in §8. Long-running, retryable, idempotent jobs.

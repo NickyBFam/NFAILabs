@@ -36,6 +36,7 @@ This document defines where NFAI Labs' facts may come from, how trustworthy each
 
 Notes:
 - A provider's official social media account MAY count as T1 for announcements only when the same information is not otherwise available and the account is verified as official; it SHOULD be replaced by documentation when documentation appears.
+- Phase 2 enforcement (D-028): the database's normal publication gate requires at least one approved T1–T3 supporting source. T4 evidence is stored as corroborating, contradicting or context evidence but never satisfies the gate on its own; the T4 exception above is not available until an audited manual-review override is approved (Phase 3 at the earliest).
 - Aggregator sites that compile others' numbers are not original sources. NFAI traces back to the original and cites that; the aggregator may be recorded as a discovery path.
 
 ---

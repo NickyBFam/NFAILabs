@@ -3,7 +3,7 @@
 These rules apply to every AI coding agent or assistant working in this repository. They override convenience. When in doubt, stop and ask the owner.
 
 **Owner:** Nicolas Familia (GitHub `NickyBFam`)
-**Current approved phase:** Phase 1 — Application Foundation (approved to begin 2026-09-29; implementation complete and ready for owner approval, not yet closed). Phase 2 has not been approved to begin. Phase 0 is approved and closed. The authoritative status is in `docs/PHASES.md`.
+**Current approved phase:** Phase 2 — Database & Data Architecture (approved to begin 2026-09-29; acceptance complete and approved by the owner 2026-09-29, closing with the owner's baseline commit). Phase 3 has not been approved to begin. Phases 0 and 1 are approved and closed. The authoritative status is in `docs/PHASES.md`.
 **Canonical branch:** `main` (configured by the owner; see `docs/DECISIONS.md` D-017)
 **License:** All rights reserved (D-018)
 
@@ -15,6 +15,7 @@ Before doing any work, read:
 3. `docs/DECISIONS.md` — what has already been decided and what is open.
 4. `docs/METHODOLOGY.md` and `docs/DATA_SOURCES.md` — before touching any data, benchmark, or ranking logic.
 5. `docs/ARCHITECTURE.md` — before making structural or technology choices.
+6. `docs/DATABASE.md` — before touching migrations, the data-access layer, or database tests.
 
 ## Phase discipline
 
@@ -76,6 +77,15 @@ Before doing any work, read:
 32. Prefer Server Components; add `"use client"` only where interactivity requires it.
 33. Pin dependency versions exactly and record significant tooling choices in `docs/DECISIONS.md`.
 34. Next.js 16 differs from older versions. Read the bundled docs in `node_modules/next/dist/docs/` before using a Next.js API.
+
+## Working with the database (Phase 2 onward)
+
+35. Schema changes are new files in `supabase/migrations/`. Never edit a migration once the owner has approved it as a baseline, and never write down migrations (D-026). Target PostgreSQL 17; no PostgreSQL 18-only features.
+36. Every new fact table registers with `nfai_register_fact_table()` (D-027). Every new table enables RLS, and every new function revokes EXECUTE from `public`, `anon` and `authenticated` unless it is deliberately public. `select * from public.nfai_security_audit()` must return no rows; the tests enforce it (D-030).
+37. Never use `on delete cascade` into catalog, measurement, pricing, provenance or audit data. Corrections supersede; changes in the world are new effective-dated rows.
+38. Application code reads the database only through `src/lib/data` repositories. Only modules that `import "server-only"` may read `SUPABASE_SERVICE_ROLE_KEY`; never prefix it with `NEXT_PUBLIC_`.
+39. `supabase/seed.sql` and database fixtures are synthetic only (rule 11). Never run migrations, resets or writes against a remote Supabase project without the owner's explicit approval.
+40. Never commit `.env.local`, `supabase/.temp/`, or any key or password. Documentation may name a project ref but never a key value.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -5,7 +5,7 @@
 | Document | Phases & Roadmap |
 | Phase | Phase 0 — Product Specification & Architecture |
 | Status | Approved by owner 2026-09-29 (Phase 0 baseline) |
-| Current approved phase | **Phase 1 — Application Foundation**: approved to begin by the owner on 2026-09-29. Implementation is complete and every acceptance criterion is met; Phase 1 is **ready for owner approval** but not yet approved as complete. Phase 2 has not been approved to begin. Phase 0 is approved and closed (baseline `4d3e2ef`). |
+| Current approved phase | **Phase 2 — Database & Data Architecture**: approved to begin by the owner on 2026-09-29 from the approved Phase 1 baseline `0baa9b1`. **Phase 2 acceptance is complete** (2026-09-29): every acceptance criterion is met, D-025 to D-030 are Accepted, and validation on a real Supabase development project passed. Phase 2 becomes the data baseline with the owner's Phase 2 commit. Phase 3 has not been approved to begin. Phase 1 is approved and closed (baseline `0baa9b1`). Phase 0 is approved and closed (baseline `4d3e2ef`). |
 | Canonical branch | `main` (D-017) |
 | Last updated | 2026-09-29 |
 
@@ -83,6 +83,7 @@
   - **Performance budgets** (mobile Lighthouse, deployed site), based on Core Web Vitals "good" thresholds: Performance score ≥ 90, LCP ≤ 2.5 s, CLS ≤ 0.1, TBT ≤ 200 ms. The Phase 1 baseline is within all of them.
   - Validated locally: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`, and `npm run build` all pass.
   - Deferred by accepted decision: end-to-end browser tests (D-022) and a Content-Security-Policy (D-023).
+  - **Approved and closed by the owner on 2026-09-29** (baseline `0baa9b1`), when the owner started Phase 2 from that baseline.
 
 ## Phase 2 — Database & Data Architecture
 - **Objective:** Implement the physical data model reflecting `MASTER_SPEC.md` §3 with history and provenance.
@@ -93,6 +94,14 @@
 - **Acceptance criteria:** Benchmark results cannot be stored without an exact model version, benchmark version, configuration, and source; pricing changes create new records; state-at-date queries work; RLS prevents public access to unpublished data.
 - **Tests/review:** Migration up/down tests; constraint tests; history query tests; RLS tests.
 - **Completion gate:** Owner approves schema as the data baseline.
+- **Status (2026-09-29): acceptance complete; approved by the owner.** The schema becomes the data baseline with the owner's Phase 2 commit. Built from Phase 1 baseline `0baa9b1`. D-025 to D-030 are Accepted (D-028 in its revised form: only T1–T3 support satisfies the publication gate; no T4 override in Phase 2). Schema reference and conventions: `DATABASE.md`.
+  - Delivered: Supabase project structure (`supabase/config.toml` for local use, migrations `0001` to `0005`, synthetic `seed.sql`); catalog, measurement, pricing, provenance, lifecycle/supersession, publication-event and audit tables; RLS and grants with a self-audit; typed data-access layer in `src/lib/data` with hand-written row types in `src/types/database`; synthetic fixtures in `src/test/fixtures/database`; database test harness in `src/test/db`.
+  - Acceptance criteria: a benchmark result cannot be stored without an exact model version, benchmark version and metric, and evaluation configuration, and cannot be validated or published without a qualifying source; published prices cannot be edited, and a price change is a new record with the old period closed; published effective periods cannot overlap, so state-at-date queries return one answer; RLS hides draft, extracted, validated and rejected records and all internal tables from `anon` and `authenticated`, and denies them every write. Each is covered by tests in `src/test/db/integration.db.test.ts` and `src/lib/data/data-layer.db.test.ts`.
+  - Tests/review mapping: migration up/down is validated by rebuilding a fresh database from all migrations on every run (D-026); constraint, history-query and RLS tests run against real SQL in PGlite (D-025) in `npm test` and CI, with no credentials.
+  - Validated locally: `npm run validate` (lint, typecheck, format check, 162 tests, build) passes; `npm run test:db` 61 database tests pass, including the provenance-gate tests (`provenance-gate.db.test.ts`) and the remote acceptance script run against PGlite (`remote-checks.db.test.ts`).
+  - **Remote Supabase validation: passed (2026-09-29, run by the owner).** Development project NFAI Labs Dev (ref `teaohntkuuqrenqfjmqh`), PostgreSQL 17: migrations `0001`–`0005` and the synthetic seed applied successfully; 29 public tables exist; RLS enabled on all 29; `nfai_security_audit()` returned 0 findings. HTTP/API validation (`supabase/validation/api_checks.mjs`): 10/10 checks passed. Details: `DATABASE.md` §8.1.
+  - Supabase advisor notes (non-blocking, `DATABASE.md` §9): informational "RLS enabled, no policy" on the four intentionally internal tables (`audit_log`, `fact_tables`, `publication_events`, `source_archives`); unindexed foreign-key notices recorded for a future performance review; unused-index notices expected on a new database, and no indexes were removed.
+  - Out of scope and not started: admin, real data, ingestion, ranking computation, Phase 3.
 
 ## Phase 3 — Admin & Data Management
 - **Objective:** Let authorized people create, source, review, and approve data.

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document | Decision Log |
-| Phase | Phase 0 — Product Specification & Architecture (D-001 to D-018); Phase 1 — Application Foundation (D-019 onward) |
+| Phase | Phase 0 — Product Specification & Architecture (D-001 to D-018); Phase 1 — Application Foundation (D-019 to D-024); Phase 2 — Database & Data Architecture (D-025 onward) |
 | Last updated | 2026-09-29 |
 
 Architectural and product decisions are recorded here. Major decisions are never made silently.
@@ -15,6 +15,7 @@ Architectural and product decisions are recorded here. Major decisions are never
 - Accepted decisions are not edited in substance; to change one, add a new decision that supersedes it and update the old one's status.
 - Phase 0 was approved by the owner on 2026-09-29. All Phase 0 decisions are `Accepted` except D-009, which remains `Open` and is deferred to Phase 3.
 - Phase 1 decisions D-019 to D-024 were accepted by the owner on 2026-09-29 during Phase 1 final acceptance.
+- Phase 2 decisions D-025 to D-030 were accepted by the owner on 2026-09-29 during Phase 2 final acceptance. D-028 was accepted in its revised form (T4-only evidence never satisfies the publication gate).
 
 ## Index
 
@@ -44,6 +45,12 @@ Architectural and product decisions are recorded here. Major decisions are never
 | D-022 | Testing: Vitest, React Testing Library, jsdom | Accepted |
 | D-023 | Baseline security headers; Content-Security-Policy deferred | Accepted |
 | D-024 | Search indexing is opt-in while pages are placeholders | Accepted |
+| D-025 | Phase 2 database tooling: supabase-js, no ORM, in-process PGlite for database tests | Accepted |
+| D-026 | PostgreSQL 17 target and forward-only migrations | Accepted |
+| D-027 | Seven-state publication lifecycle shared by every fact table | Accepted |
+| D-028 | Provenance model and the publication provenance rule | Accepted |
+| D-029 | Published effective periods may not overlap | Accepted |
+| D-030 | Database access model: read-only public record, server-only service role | Accepted |
 
 ---
 
@@ -240,4 +247,60 @@ Architectural and product decisions are recorded here. Major decisions are never
 - **Rationale:** Prevents premature indexing while keeping the SEO foundation ready to switch on.
 - **Alternatives considered:** Index everything now; per-page indexing flags (unnecessary until pages have real content).
 - **Consequences:** The owner decides when to enable indexing, likely once Phase 4 content exists.
+
+---
+
+## D-025 — Phase 2 database tooling: supabase-js, no ORM, in-process PGlite for database tests
+- **Status:** Accepted (2026-09-29, owner approval during Phase 2 final acceptance)
+- **Context:** Phase 2 needs a typed data-access layer and real tests of constraints, triggers, history rules and Row Level Security. The development machine has neither Docker nor a local PostgreSQL, so the Supabase CLI local stack (`supabase start`) cannot run there, and CI must not need credentials.
+- **Decision:** Add `@supabase/supabase-js` 2.117.2 (the official client) and `server-only` 0.0.1 as runtime dependencies, and `@electric-sql/pglite` 0.5.8 as a development dependency. No ORM or query builder. Database tests (`*.db.test.ts`, Vitest project `db`) run every migration in PGlite, an in-process PostgreSQL, after a test-only stand-in for Supabase's API roles, default privileges and `auth.*` functions (`src/test/db/supabase-shim.sql`). The Supabase CLI is not a dependency; it is run with `npx supabase` where Docker is available. Row types are hand-written in `src/types/database` until generation is possible, and a database test fails if they drift from the migrations. `server-only` is aliased to a no-op in Vitest only.
+- **Rationale:** Real SQL semantics (RLS, triggers, deferred constraints, exclusion constraints) are tested deterministically with no network, Docker or secrets, locally and in CI. supabase-js is the official, lightweight client; an ORM would duplicate the schema and hide RLS behaviour.
+- **Alternatives considered:** Supabase CLI local stack in CI (needs Docker; heavier; not runnable on the owner's machine today); a PostgreSQL service container in CI only (local and CI tests would differ); mocking the database (cannot test RLS or triggers); an ORM such as Prisma or Drizzle (extra schema layer, weaker fit with RLS).
+- **Consequences:** PGlite runs PostgreSQL 18 while Supabase targets 17, so migrations must avoid PostgreSQL 18-only features (D-026). The shim is not Supabase itself: behaviour specific to PostgREST or Supabase Auth still needs a check against a real Supabase stack before production use (recorded as a known limitation).
+
+## D-026 — PostgreSQL 17 target and forward-only migrations
+- **Status:** Accepted (2026-09-29, owner approval during Phase 2 final acceptance)
+- **Context:** Supabase migrations are forward-only; `PHASES.md` Phase 2 lists "migration up/down tests".
+- **Decision:** Target PostgreSQL 17 (`supabase/config.toml` `major_version = 17`) and avoid PostgreSQL 18-only features. Migrations live in `supabase/migrations/` as numbered files applied in order, with no down migrations. "Up/down" is satisfied by rebuilding from an empty database: every test run creates a fresh database and applies all migrations, and `supabase db reset` does the same locally. Schema changes after the Phase 2 baseline are new migrations, never edits to applied ones.
+- **Rationale:** Matches Supabase's tooling and keeps the SQL portable (D-005). Down migrations for append-only history would be destructive and rarely correct.
+- **Alternatives considered:** Hand-written down migrations (would drop historical data; untestable against real history).
+- **Consequences:** Rolling back a deployed migration means writing a new forward migration.
+
+## D-027 — Seven-state publication lifecycle shared by every fact table
+- **Status:** Accepted (2026-09-29, owner approval during Phase 2 final acceptance)
+- **Context:** Two Phase 2 components proposed different publication models: a three-value `publication_status` (draft, published, retracted) on the catalog tables, and a lookup-table lifecycle in the provenance migration. Row Level Security must key on one of them.
+- **Decision:** Every fact table has `publication_state text not null default 'draft'` referencing `publication_states` (draft, extracted, validated, published, rejected, superseded, withdrawn). Tables opt in with `nfai_register_fact_table()`, which enforces allowed transitions, freezes content from `validated` onward (only `valid_to` may still be set once, from null), requires provenance for `validated` and `published`, forbids deletion past draft and TRUNCATE, and logs every state change and row change. The public record is the states flagged `is_public` (published, superseded, withdrawn); current facts are `is_current` (published) with the as-of time inside `[valid_from, valid_to)`. Corrections use supersession; a change in the world (a new price) is a new row plus a closed `valid_to` on the old one.
+- **Rationale:** Only the lifecycle model implements D-011 (extraction proposes, validation, human approval), D-010 and `METHODOLOGY.md` §12 (supersede, never overwrite; withdrawn results kept) and `DATA_SOURCES.md` (provenance before publication). A lookup table can gain states without an enum rewrite.
+- **Alternatives considered:** Three-value status column (no proposal or review states; retraction and correction indistinguishable).
+- **Consequences:** Every query for current data must filter on `is_current` and the effective period; the data-access layer does this centrally. Approval is not yet separated from proposal by person (two-person rule deferred to Phase 3).
+
+## D-028 — Provenance model and the publication provenance rule
+- **Status:** Accepted (2026-09-29, owner approval of the revised rule during Phase 2 final acceptance)
+- **Context:** `DATA_SOURCES.md` requires every published external fact to be traceable to a source with tier, dates and extraction method. The first version of this decision let a fact be published on T4 evidence alone when every T4 link was labeled low confidence. The owner ruled that ordinary facts must not become publishable merely because secondary sources exist.
+- **Decision:**
+  - **Source model.** Sources are three layers: `sources` (registry entry with tier and approval status), `source_documents` (a citable document; immutable original URL, with `source_document_locations` recording later moves) and `source_observations` (a dated retrieval with optional content hash). Archived evidence references live in the internal `source_archives`. `provenance_links` connect any registered fact row to a document (optionally a specific observation) with a role (primary, corroborating, verification, contradicting, retraction_notice, discovery, context), the tier frozen at citation time, extraction method and confidence. A fact may have many links; links are never edited, only revoked once, so historical evidence is kept.
+  - **Normal publication gate.** A row can be validated or published only with at least one active primary, corroborating or verification link to an approved source whose tier at citation is T1, T2 or T3 (`source_tiers.satisfies_publication_gate`). The gate is checked at commit and re-checked when a link is revoked.
+  - **T4.** T4 links may be recorded in any role, including corroborating, contradicting and context, and support extraction and review, but T4-only evidence never satisfies the gate, whatever its confidence label.
+  - **T5.** T5 may only be discovery or context evidence (`source_tiers.may_be_supporting_link` is false) and never satisfies the gate.
+  - **No override in Phase 2.** There is no exception mechanism for T4-only facts. Phase 2 has no admin identities or approval roles to make one safe; Phase 3 may introduce a tightly audited manual-review override through a new decision.
+  - **Exemptions.** `capabilities` (vocabulary) and `evaluation_configurations` (reusable conditions, whose disclosing source is cited on the results that use them) do not require their own provenance. Discovery and revoked links are internal.
+- **Rationale:** Implements `DATA_SOURCES.md` §2–§5 in the database, so an unsourced or secondarily sourced fact cannot become public even through a buggy client. This is stricter than `DATA_SOURCES.md` §2's T4 allowance ("unless no higher tier exists and the record is labeled low-confidence"); until an audited override exists, such records stay unpublished.
+- **Alternatives considered:** A single `source_url` column per fact (no tiers, no multiple sources, no history); allowing low-confidence T4-only publication (the original version; rejected by the owner); a Phase 2 override flag (unsafe without Phase 3 identity and approval audit).
+- **Consequences:** Data entry (Phase 3) must attach a T1–T3 source before review; facts with only T4 support stay in draft or validated-pending states until a higher-tier source or a future audited override exists. Public provenance queries must name columns explicitly (column-level grants hide internal fields). Tests: `src/test/db/provenance-gate.db.test.ts`.
+
+## D-029 — Published effective periods may not overlap
+- **Status:** Accepted (2026-09-29, owner approval during Phase 2 final acceptance)
+- **Context:** Neither the catalog nor the lifecycle migration prevented two published rows of the same price series, capability or rolling alias from being in effect at the same time, which would make state-at-date answers ambiguous.
+- **Decision:** Migration `0005_effective_period_integrity.sql` adds deferrable exclusion constraints (btree_gist) so that, among `published` rows, pricing series, model capability values and rolling alias assignments never overlap in `[valid_from, valid_to)`, and a pinned identifier names at most one published version per channel. The constraints are checked at commit, so a replacement and the closing of the old period can happen in one transaction in either order.
+- **Rationale:** Makes "the price (or capability, or alias target) at date D" unique by construction; the data-access layer additionally refuses to pick between overlapping current rows.
+- **Alternatives considered:** Application-only checks (bypassable); trigger-based checks (race-prone without locking).
+- **Consequences:** Drafts and proposals may still overlap; conflicts surface at publication.
+
+## D-030 — Database access model: read-only public record, server-only service role
+- **Status:** Accepted (2026-09-29, owner approval during Phase 2 final acceptance)
+- **Context:** Supabase exposes the `public` schema through its Data API with the anon key, which is public by design.
+- **Decision:** `anon` and `authenticated` get SELECT only, on public tables only, and RLS on every table limits them to rows in public states whose parent rows are also visible. They cannot write or call workflow functions. `authenticated` has no extra rights until Phase 3 designs roles. `service_role` (bypasses RLS) is used only by server code and workers and is still bound by the lifecycle triggers; it cannot truncate, forge audit or publication events, or change the lifecycle vocabulary. The audit log, publication events, source archives and the fact-table registry are internal. The only SECURITY DEFINER functions are the audit and publication-event triggers; `nfai_security_audit()` must return no rows after every migration. Environment variables: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (public), `SUPABASE_SERVICE_ROLE_KEY` (secret, read only by modules that import `server-only`); all optional so the app builds without them.
+- **Rationale:** Least privilege with two independent layers (grants and RLS), and a test-enforced self-audit so later migrations cannot silently widen access.
+- **Alternatives considered:** Exposing only views to the API (more objects to keep in sync; RLS still needed on base tables).
+- **Consequences:** New tables and functions in later phases must enable RLS and revoke default EXECUTE, or the self-audit (and the tests) fail.
 

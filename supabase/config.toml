@@ -1,0 +1,38 @@
+# Supabase CLI configuration for LOCAL development only (`supabase start`, `supabase db reset`).
+# It holds no credentials. Remote projects are linked by the owner; nothing here targets one.
+# Settings not listed use the CLI defaults. See docs/DATABASE.md.
+
+project_id = "nfai-labs"
+
+[api]
+enabled = true
+port = 54321
+# Only the public schema is exposed through the Data API; Row Level Security protects it.
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+# Target PostgreSQL major version. Migrations must not use features newer than this.
+major_version = 17
+
+[db.migrations]
+enabled = true
+
+[db.seed]
+# seed.sql contains synthetic, obviously fictional test data only (AGENTS.md rule 11).
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000"]
+# Public sign-up is out of scope until user accounts are approved (Phase 19).
+enable_signup = false
