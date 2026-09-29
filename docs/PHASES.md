@@ -4,8 +4,9 @@
 |---|---|
 | Document | Phases & Roadmap |
 | Phase | Phase 0 — Product Specification & Architecture |
-| Status | Draft, pending owner approval |
-| Current approved phase | **Phase 0** |
+| Status | Approved by owner 2026-09-29 (Phase 0 baseline) |
+| Current approved phase | **Phase 0** — completed and approved by the owner on 2026-09-29. Phase 1 has **not** been approved to begin. |
+| Canonical branch | `main` (D-017) |
 | Last updated | 2026-09-29 |
 
 ## How phases work
@@ -54,11 +55,11 @@
 - **Dependencies:** None.
 - **Acceptance criteria:** All 13 required topics covered; every phase has all required sections; decisions logged with required fields; no fabricated factual data; no application code.
 - **Tests/review:** Document structure and cross-reference checks; owner review.
-- **Completion gate:** Owner approves the documents and resolves or defers open questions in `DECISIONS.md`; owner commits the docs.
+- **Completion gate:** Owner approves the documents and resolves or defers open questions in `DECISIONS.md`; owner commits the docs on `main`. **Status: approved by the owner on 2026-09-29** (open questions resolved; D-009 deferred to Phase 3). Baseline commit is performed by the owner.
 
 ## Phase 1 — Application Foundation
 - **Objective:** Create a minimal, well-configured application skeleton with no product data.
-- **Scope:** Next.js + React + TypeScript (strict) + Tailwind setup; linting, formatting, type-checking; test framework (unit + e2e harness); CI workflow; environment variable handling; base layout, navigation shell with placeholder routes for the product areas; design tokens; accessibility baseline; worker platform decision (D-007) recorded.
+- **Scope:** Next.js + React + TypeScript (strict) + Tailwind setup; linting, formatting, type-checking; test framework (unit + e2e harness); CI workflow; environment variable handling; base layout, navigation shell with placeholder routes for the product areas; design tokens; accessibility baseline. No worker or evaluation hosting provider is chosen in this phase (D-007, D-008).
 - **Out of scope:** Database schema, real content or data, admin, rankings logic, authentication beyond scaffolding decisions.
 - **Deliverables:** Running app locally and on a preview deployment; CI green; README with setup steps.
 - **Dependencies:** Phase 0 approved; D-004, D-006 accepted.
@@ -149,7 +150,7 @@
 ## Phase 10 — AI Stack Builder
 - **Objective:** Recommend combinations of AI tools for larger workflows.
 - **Scope:** Workflow templates (e.g. software project, research, game development); role-based component selection; cost estimation from pricing records with stated assumptions.
-- **Out of scope:** Affiliate or sponsored stacks unless D-015 permits.
+- **Out of scope:** Any sponsored or affiliate influence on stack recommendations. Sponsored/affiliate elements, if ever added, must be disclosed and structurally separated from recommendation logic (D-015).
 - **Deliverables:** Stack Builder area.
 - **Dependencies:** Phase 9.
 - **Acceptance criteria:** Each component's role and rationale shown; cost assumptions explicit; only catalog tools used.
@@ -168,7 +169,7 @@
 
 ## Phase 12 — Automated Data Ingestion
 - **Objective:** Automate source → fetch → parse → normalize → detect change → validate → approve → publish.
-- **Scope:** Worker platform per D-007; source registry scheduling; parsers; change detection; validation rules; review queue integration; monitoring.
+- **Scope:** Worker hosting provider selected by a new owner-approved decision (requirement per D-007); source registry scheduling; parsers; change detection; validation rules; review queue integration; monitoring.
 - **Out of scope:** Auto-publishing without approval (unless a later decision permits specific low-risk classes).
 - **Deliverables:** Running ingestion pipeline for an approved initial set of sources.
 - **Dependencies:** Phases 3, 4, 5, 11.
@@ -248,20 +249,20 @@
 
 ## Phase 20 — Public API
 - **Objective:** Expose selected published data programmatically.
-- **Scope:** Versioned read-only API with provenance fields; keys; rate limits; documentation; terms and licensing (D-018).
+- **Scope:** Versioned read-only API with provenance fields; keys; rate limits; documentation; API terms and a new licensing decision (current baseline: all rights reserved, D-018).
 - **Out of scope:** Write APIs; unpublished data.
 - **Deliverables:** API v1 and docs.
-- **Dependencies:** D-018 decided; data areas stable.
+- **Dependencies:** New API licensing/terms decision approved (supersedes or extends D-018); data areas stable.
 - **Acceptance criteria:** Only approved data exposed; provenance included; rate limits enforced.
 - **Tests/review:** Contract tests; load tests; security review.
 - **Completion gate:** Owner approval.
 
 ## Phase 21 — Monetization
 - **Objective:** Establish sustainable revenue without compromising independence.
-- **Scope:** Options per D-015 (e.g. API tiers, pro features); disclosure policy.
+- **Scope:** Monetization options within D-015 (e.g. API tiers, pro features, disclosed and separated sponsored or affiliate content); disclosure policy.
 - **Out of scope:** Any mechanism that alters data, rankings, or recommendations.
 - **Deliverables:** Approved monetization model and implementation.
-- **Dependencies:** D-015 decided; Phases 19–20 as applicable.
+- **Dependencies:** D-015 (accepted); Phases 19–20 as applicable.
 - **Acceptance criteria:** Independence policy enforced and disclosed.
 - **Tests/review:** Billing tests; policy review.
 - **Completion gate:** Owner approval.

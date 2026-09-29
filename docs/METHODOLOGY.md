@@ -3,9 +3,9 @@
 | Field | Value |
 |---|---|
 | Document | Methodology |
-| Methodology version | 0.1.0 (draft, pre-baseline) |
+| Methodology version | 0.1.0 (Phase 0 baseline; no categories, benchmarks, or weights finalized) |
 | Phase | Phase 0 — Product Specification & Architecture |
-| Status | Draft, pending owner approval |
+| Status | Approved by owner 2026-09-29 (Phase 0 baseline) |
 | Last updated | 2026-09-29 |
 
 This document defines how NFAI Labs decides which measurements to include, when measurements can be compared, and how rankings and derived scores are produced. It is intended to be published publicly (in the Methodology area) once approved.
@@ -245,4 +245,4 @@ Applies to Phases 14–15 and later. Focus areas: software engineering, coding, 
 
 | Version | Date | Change |
 |---|---|---|
-| 0.1.0 | 2026-09-29 | Initial draft in Phase 0. No weights, benchmarks, or categories finalized. |
+| 0.1.0 | 2026-09-29 | Initial Phase 0 version, approved by the owner as the Phase 0 baseline. No weights, benchmarks, or categories finalized. |

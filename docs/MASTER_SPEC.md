@@ -4,7 +4,7 @@
 |---|---|
 | Document | Master Product Specification |
 | Phase | Phase 0 — Product Specification & Architecture |
-| Status | Draft, pending owner approval |
+| Status | Approved by owner 2026-09-29 (Phase 0 baseline) |
 | Owner | Nicolas Familia (`NickyBFam`) |
 | Last updated | 2026-09-29 |
 
@@ -91,7 +91,7 @@ Each area below defines what belongs in it and what explicitly does not. Areas s
 
 ### 2.1 Rankings
 - **Belongs:** Use-case-specific ranked lists (Coding, Reasoning, General Use, Research, Agents, Game Development, Students, Value, Speed, Long Context, Multimodal, and future categories). Each ranking shows the category definition, methodology version, input measurements, coverage/confidence, as-of date, and ranking history.
-- **Does not belong:** A single universal "best AI" score as the headline product; rankings with undisclosed weights; rankings built from results that are not comparable under `METHODOLOGY.md`; sponsored placement.
+- **Does not belong:** A single universal "best AI" score as the headline product; rankings with undisclosed weights; rankings built from results that are not comparable under `METHODOLOGY.md`; sponsored or paid placement of any kind.
 
 ### 2.2 Models
 - **Belongs:** One page per exact model/version: identifiers (including API model IDs), provider, family, release and lifecycle status, capabilities, modalities, context and output limits, pricing history, benchmark results (grouped by benchmark version and evaluation conditions), category ranking positions, sources, and change history.
@@ -189,8 +189,8 @@ NFAI stores structured facts, short original summaries, provenance, and links to
 
 ## 6. Independence and trust
 
-- Commercial arrangements (future monetization, Phase 21) must never change data, rankings, recommendations, or methodology.
-- Any sponsored or affiliate content, if ever introduced, must be clearly labeled and separated from rankings and recommendations. Whether to allow it at all is an open decision (see `DECISIONS.md`).
+- Payment, sponsorship, affiliate relationships, or commercial partnerships must never alter or influence NFAI benchmark results, rankings, derived scores, or methodology (D-015).
+- Sponsored or affiliate content may be allowed in the future, but only if clearly disclosed and structurally separated from NFAI rankings, benchmark scores, methodology, recommendations, and editorial evaluation (D-015).
 - Corrections are accepted from anyone (including providers) but applied only through the same sourcing and approval process as any other change, and logged.
 
 ---

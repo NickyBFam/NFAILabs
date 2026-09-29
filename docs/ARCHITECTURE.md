@@ -4,7 +4,7 @@
 |---|---|
 | Document | Architecture |
 | Phase | Phase 0 — Product Specification & Architecture |
-| Status | Draft, pending owner approval |
+| Status | Approved by owner 2026-09-29 (Phase 0 baseline) |
 | Last updated | 2026-09-29 |
 
 This is the target architecture for the eventual application. Nothing in this document is implemented in Phase 0. Technology choices are **planned defaults**, not unquestionable assumptions; concerns are recorded in `DECISIONS.md`.
@@ -22,7 +22,7 @@ This is the target architecture for the eventual application. Nothing in this do
 | Database | PostgreSQL | D-005 |
 | Managed database/auth/storage | Supabase | D-005 |
 | Web hosting | Vercel | D-006 |
-| Background workers & evaluations | Separate from web hosting (to be selected) | D-007, D-008 |
+| Background workers & evaluations | Must run separately from the Vercel-hosted web app where required (accepted requirement); hosting provider not yet chosen | D-007, D-008 |
 
 ---
 

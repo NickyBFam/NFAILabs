@@ -4,7 +4,7 @@
 |---|---|
 | Document | Data Sources & Provenance |
 | Phase | Phase 0 — Product Specification & Architecture |
-| Status | Draft, pending owner approval |
+| Status | Approved by owner 2026-09-29 (Phase 0 baseline) |
 | Last updated | 2026-09-29 |
 
 This document defines where NFAI Labs' facts may come from, how trustworthy each kind of source is, and what provenance must be stored with every fact.

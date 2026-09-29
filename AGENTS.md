@@ -3,7 +3,9 @@
 These rules apply to every AI coding agent or assistant working in this repository. They override convenience. When in doubt, stop and ask the owner.
 
 **Owner:** Nicolas Familia (GitHub `NickyBFam`)
-**Current approved phase:** Phase 0 — Product Specification & Architecture (see `docs/PHASES.md`)
+**Current approved phase:** Phase 0 — Product Specification & Architecture, completed and approved 2026-09-29. Phase 1 has not been approved to begin. The authoritative status is in `docs/PHASES.md`.
+**Canonical branch:** `main` (configured by the owner; see `docs/DECISIONS.md` D-017)
+**License:** All rights reserved (D-018)
 
 ## Read first
 
@@ -61,3 +63,8 @@ Before doing any work, read:
 
 26. Never commit or write secrets, API keys, or credentials into the repository.
 27. Do not install dependencies or run network-writing operations outside the approved phase's scope.
+
+## Licensing and commercial independence
+
+28. **Do not add a license.** The project is all rights reserved (D-018). Do not add `LICENSE` files, license headers, or open-source/open-data terms unless the owner explicitly approves one.
+29. **Commercial relationships never influence data.** Sponsorship, affiliate, payment, or partnership data must never affect benchmark results, rankings, derived scores, methodology, or recommendations. Any sponsored or affiliate content must be clearly disclosed and structurally separated (D-015).
