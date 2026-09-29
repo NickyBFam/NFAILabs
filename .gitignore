@@ -1,0 +1,27 @@
+# Dependencies
+/node_modules
+
+# Next.js build output
+/.next/
+/out/
+/build
+
+# Test output
+/coverage
+
+# Environment files (never commit secrets). .env.example is committed.
+.env*
+!.env.example
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel
+.vercel
+
+# Logs and OS files
+npm-debug.log*
+.DS_Store
+Thumbs.db
+*.pem

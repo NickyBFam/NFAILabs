@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Colors are CSS variables so light and dark schemes share one
+ * set of utility names (bg-surface, text-muted, border-line, ...).
+ * Text/background pairs are chosen to meet WCAG AA contrast (4.5:1 for body text).
+ */
+:root {
+  --nf-background: #f8fafc; /* slate-50 */
+  --nf-surface: #ffffff;
+  --nf-surface-muted: #f1f5f9; /* slate-100 */
+  --nf-foreground: #0f172a; /* slate-900 */
+  --nf-muted: #475569; /* slate-600 */
+  --nf-line: #e2e8f0; /* slate-200 */
+  --nf-accent: #0f766e; /* teal-700 */
+  --nf-accent-hover: #115e59; /* teal-800 */
+  --nf-accent-foreground: #ffffff;
+  --nf-accent-soft: #ccfbf1; /* teal-100 */
+  --nf-notice: #fffbeb; /* amber-50 */
+  --nf-notice-line: #fcd34d; /* amber-300 */
+  --nf-notice-foreground: #78350f; /* amber-900 */
+  --nf-focus: #2563eb; /* blue-600 */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --nf-background: #020617; /* slate-950 */
+    --nf-surface: #0f172a; /* slate-900 */
+    --nf-surface-muted: #1e293b; /* slate-800 */
+    --nf-foreground: #f1f5f9; /* slate-100 */
+    --nf-muted: #94a3b8; /* slate-400 */
+    --nf-line: #1e293b; /* slate-800 */
+    --nf-accent: #5eead4; /* teal-300 */
+    --nf-accent-hover: #99f6e4; /* teal-200 */
+    --nf-accent-foreground: #042f2e; /* teal-950 */
+    --nf-accent-soft: #134e4a; /* teal-900 */
+    --nf-notice: #1c1917; /* stone-900 */
+    --nf-notice-line: #b45309; /* amber-700 */
+    --nf-notice-foreground: #fde68a; /* amber-200 */
+    --nf-focus: #60a5fa; /* blue-400 */
+  }
+}
+
+@theme inline {
+  --color-background: var(--nf-background);
+  --color-surface: var(--nf-surface);
+  --color-surface-muted: var(--nf-surface-muted);
+  --color-foreground: var(--nf-foreground);
+  --color-muted: var(--nf-muted);
+  --color-line: var(--nf-line);
+  --color-accent: var(--nf-accent);
+  --color-accent-hover: var(--nf-accent-hover);
+  --color-accent-foreground: var(--nf-accent-foreground);
+  --color-accent-soft: var(--nf-accent-soft);
+  --color-notice: var(--nf-notice);
+  --color-notice-line: var(--nf-notice-line);
+  --color-notice-foreground: var(--nf-notice-foreground);
+  --color-focus: var(--nf-focus);
+
+  /* System font stacks: no web-font download, no layout shift. */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+
+  /* Visible, consistent keyboard focus for every interactive element. */
+  :focus-visible {
+    outline: 2px solid var(--nf-focus);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

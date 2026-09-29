@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document | Decision Log |
-| Phase | Phase 0 — Product Specification & Architecture |
+| Phase | Phase 0 — Product Specification & Architecture (D-001 to D-018); Phase 1 — Application Foundation (D-019 onward) |
 | Last updated | 2026-09-29 |
 
 Architectural and product decisions are recorded here. Major decisions are never made silently.
@@ -14,6 +14,7 @@ Architectural and product decisions are recorded here. Major decisions are never
 - New decisions get the next ID. IDs are never reused.
 - Accepted decisions are not edited in substance; to change one, add a new decision that supersedes it and update the old one's status.
 - Phase 0 was approved by the owner on 2026-09-29. All Phase 0 decisions are `Accepted` except D-009, which remains `Open` and is deferred to Phase 3.
+- Phase 1 decisions (D-019 onward) are `Proposed` until the owner approves Phase 1.
 
 ## Index
 
@@ -37,6 +38,12 @@ Architectural and product decisions are recorded here. Major decisions are never
 | D-016 | Git operations are performed only by the owner | Accepted |
 | D-017 | Default branch is `main`; owner configures the remote | Accepted |
 | D-018 | Repository and data licensing: all rights reserved | Accepted |
+| D-019 | Runtime and package baseline: Node.js 22 LTS, npm, exact version pins | Proposed |
+| D-020 | TypeScript 5.9 instead of TypeScript 6 or 7 | Proposed |
+| D-021 | ESLint 9 retained despite end of support | Proposed |
+| D-022 | Testing: Vitest, React Testing Library, jsdom | Proposed |
+| D-023 | Baseline security headers; Content-Security-Policy deferred | Proposed |
+| D-024 | Search indexing is opt-in while pages are placeholders | Proposed |
 
 ---
 
@@ -183,3 +190,54 @@ Architectural and product decisions are recorded here. Major decisions are never
 - **Rationale:** Owner instruction; keeps options open.
 - **Alternatives considered:** Permissive code license with separate data terms; open data license for selected datasets.
 - **Consequences:** Agents must not add `LICENSE` files or license headers. Public API terms (Phase 20) require a new licensing decision.
+
+---
+
+## D-019 — Runtime and package baseline: Node.js 22 LTS, npm, exact version pins
+- **Status:** Proposed (Phase 1)
+- **Context:** Phase 1 creates the application. The local development environment has Node.js 22.20.0 and npm 11.6.2. Node.js 24 is also an LTS line. Phase 0 did not fix a package manager.
+- **Decision:** Target Node.js 22 LTS (`engines`: `^22.13.0 || >=24.0.0`; `.nvmrc` = `22`) and use npm with a committed `package-lock.json`. All dependencies are pinned to exact versions (no `^` ranges): Next.js 16.3.7, React 19.3.0, Tailwind CSS 4.3.3, TypeScript 5.9.3, ESLint 9.39.5, Vitest 5.0.2. The minimum of 22.13 comes from jsdom 29's engine requirement.
+- **Rationale:** Node 22 matches the local environment and is supported by every chosen tool; npm needs no extra tooling; exact pins make installs and CI deterministic and upgrades deliberate.
+- **Alternatives considered:** Node.js 24 (newer LTS, but not installed locally; allowed by `engines`); pnpm (faster, but an extra tool with no Phase 1 benefit); caret ranges (less deterministic).
+- **Consequences:** Dependency upgrades are explicit changes. Moving CI to Node 24 is a one-line change to `.nvmrc`. jsdom 30 was not used because it requires Node ^22.22.2.
+
+## D-020 — TypeScript 5.9 instead of TypeScript 6 or 7
+- **Status:** Proposed (Phase 1)
+- **Context:** npm lists TypeScript 7.0.2 (the native compiler) and 6.0.3 as newer releases. Next.js type checking during build and typescript-eslint rely on the TypeScript JavaScript API.
+- **Decision:** Use TypeScript 5.9.3 in strict mode with `noUncheckedIndexedAccess`, `noImplicitOverride`, and `noFallthroughCasesInSwitch`.
+- **Rationale:** 5.9 is the release line the Next.js 16 and typescript-eslint toolchain is known to support; compatibility of 6.x/7.x with that toolchain was not verified in Phase 1.
+- **Alternatives considered:** TypeScript 7 (fast native compiler, compatibility risk with tooling that uses the compiler API); TypeScript 6 (transition release, unverified with the toolchain).
+- **Consequences:** Revisit when Next.js and typescript-eslint document support for newer TypeScript lines.
+
+## D-021 — ESLint 9 retained despite end of support
+- **Status:** Proposed (Phase 1)
+- **Context:** npm reports ESLint 9.39.5 as no longer supported; ESLint 10 is current. `eslint-config-next` 16.3.7 bundles `eslint-plugin-react`, `eslint-plugin-jsx-a11y`, and `eslint-plugin-import`, whose peer ranges end at ESLint 9.
+- **Decision:** Use ESLint 9.39.5 with the flat config (`eslint.config.mjs`) extending `eslint-config-next/core-web-vitals` and `eslint-config-next/typescript`, plus stricter rules (no `any`, no `@ts-` comment suppression, consistent type imports, no `dangerouslySetInnerHTML`, no unsafe `target="_blank"`).
+- **Rationale:** Keeps the official Next.js lint rules (including accessibility rules) working without peer-dependency overrides.
+- **Alternatives considered:** ESLint 10 with forced peer overrides (unsupported plugin combinations); dropping `eslint-config-next` (loses Next.js and accessibility rules).
+- **Consequences:** A known tooling limitation. Upgrade to ESLint 10 when `eslint-config-next` supports it.
+
+## D-022 — Testing: Vitest, React Testing Library, jsdom
+- **Status:** Proposed (Phase 1)
+- **Context:** Phase 1 needs automated tests for shell behavior, configuration, components, and metadata routes. The Next.js documentation covers Vitest and Jest for unit tests.
+- **Decision:** Use Vitest 5 with `@vitejs/plugin-react`, React Testing Library, `@testing-library/user-event`, `@testing-library/jest-dom`, and jsdom. Tests live next to the code as `*.test.ts(x)` files under `src/`. End-to-end browser tests are not added in Phase 1.
+- **Rationale:** Fast, ESM-native, TypeScript without extra transpiler setup; the same runner will cover pure logic in later phases (ranking math, comparability rules).
+- **Alternatives considered:** Jest (heavier ESM/TypeScript configuration); Playwright end-to-end tests now (useful later, adds browser setup to CI before there are real user flows).
+- **Consequences:** Async Server Components cannot be unit tested with Vitest; such behavior will need end-to-end tests when it exists. Adding Playwright is deferred to a later phase.
+
+## D-023 — Baseline security headers; Content-Security-Policy deferred
+- **Status:** Proposed (Phase 1)
+- **Context:** Phase 1 requires safe defaults without building security infrastructure early.
+- **Decision:** Send `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, and a restrictive `Permissions-Policy` on all routes, and disable the `X-Powered-By` header. Defer a Content-Security-Policy.
+- **Rationale:** These headers are low-risk and framework-independent. A strict CSP with Next.js needs nonces (which force dynamic rendering) or hash-based policies, and should be designed with the real script inventory.
+- **Alternatives considered:** Nonce-based CSP now (would make every page dynamic); no headers.
+- **Consequences:** CSP is to be designed no later than Phase 22 (Production Hardening), or earlier if third-party scripts are introduced.
+
+## D-024 — Search indexing is opt-in while pages are placeholders
+- **Status:** Proposed (Phase 1)
+- **Context:** All product areas are placeholders. Indexing thin, unfinished pages could mislead users and harm future search performance.
+- **Decision:** Pages emit `noindex, nofollow` and `robots.txt` disallows all crawling unless `NFAI_ALLOW_INDEXING=true`. Canonical URLs are self-referencing and resolved against `NEXT_PUBLIC_SITE_URL` (falling back to Vercel's production URL, then localhost). `sitemap.xml` lists static routes only.
+- **Rationale:** Prevents premature indexing while keeping the SEO foundation ready to switch on.
+- **Alternatives considered:** Index everything now; per-page indexing flags (unnecessary until pages have real content).
+- **Consequences:** The owner decides when to enable indexing, likely once Phase 4 content exists.
+

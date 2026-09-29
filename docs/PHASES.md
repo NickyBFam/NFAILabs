@@ -5,7 +5,7 @@
 | Document | Phases & Roadmap |
 | Phase | Phase 0 — Product Specification & Architecture |
 | Status | Approved by owner 2026-09-29 (Phase 0 baseline) |
-| Current approved phase | **Phase 0** — completed and approved by the owner on 2026-09-29. Phase 1 has **not** been approved to begin. |
+| Current approved phase | **Phase 1 — Application Foundation**: approved to begin by the owner on 2026-09-29. Implementation awaits owner review; Phase 1 is **not** yet approved as complete. Phase 0 is approved and closed (baseline `4d3e2ef`). |
 | Canonical branch | `main` (D-017) |
 | Last updated | 2026-09-29 |
 
@@ -66,6 +66,11 @@
 - **Acceptance criteria:** Clean install and build; lint/type/test pass in CI; placeholder pages clearly marked as placeholders with no fake data; Lighthouse/accessibility baseline recorded.
 - **Tests/review:** Smoke tests for routes; CI run; owner review of structure.
 - **Completion gate:** Owner approval; baseline tooling documented.
+- **Implementation status (2026-09-29): implemented and validated locally, awaiting owner review. Not approved.**
+  - Built from Phase 0 baseline `4d3e2ef`. Stack and tooling decisions: D-019 to D-024 (Proposed).
+  - Delivered: Next.js 16 App Router app in `src/`, strict TypeScript, Tailwind CSS v4 design tokens, responsive shell (header, desktop and mobile navigation, footer, skip link), foundation homepage, 12 placeholder product-area routes, metadata/canonical/robots/sitemap foundation, `not-found`, `error`, and `global-error` handling, baseline security headers, ESLint, Prettier, Vitest test suite, GitHub Actions CI workflow, `.env.example`, `README.md`.
+  - Validated locally: `npm run lint`, `npm run format:check`, `npm run typecheck`, `npm test`, and `npm run build` all pass; production server smoke-checked (all routes render, 404 works, headers present, `noindex` by default); mobile menu keyboard behavior checked in a browser at 375 px width.
+  - Outstanding before approval: CI has not run yet (runs after the owner pushes); no preview deployment exists yet (Vercel project not connected); a Lighthouse report has not been recorded; the end-to-end test harness named in scope is deferred (D-022).
 
 ## Phase 2 — Database & Data Architecture
 - **Objective:** Implement the physical data model reflecting `MASTER_SPEC.md` §3 with history and provenance.

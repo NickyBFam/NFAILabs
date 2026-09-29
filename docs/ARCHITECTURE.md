@@ -65,6 +65,7 @@ Key property: **the public website and API are read-mostly views over approved d
 - Areas map 1:1 to `MASTER_SPEC.md` §2.
 - No direct writes to the database. Interactive tools (Compare, Finder, Stack Builder) compute from published data; any server-side logic is deterministic and testable.
 - Accessibility, SEO (structured metadata for model and benchmark pages), and performance budgets defined in Phase 1.
+- **Phase 1 implementation (pending owner approval):** App Router in `src/app`, with shared components in `src/components/{layout,page,ui}`, pure configuration and helpers in `src/lib`, and design tokens in `src/styles/globals.css`. Product areas and navigation come from one structural config (`src/lib/product-areas.ts`). Every route is statically prerendered; the only Client Components are the navigation (mobile menu, active link state) and the error boundaries. The system font stack avoids web-font downloads. Metadata uses a root title template and `metadataBase`, with self-referencing canonicals; indexing is opt-in (D-024). Numeric performance budgets have not been set yet and are to be recorded with the first Lighthouse baseline.
 
 ### 3.2 Admin / data-management system
 - Authenticated, role-based (e.g. `viewer`, `editor`, `approver`, `admin`).

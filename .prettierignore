@@ -1,0 +1,10 @@
+.next/
+out/
+build/
+coverage/
+node_modules/
+package-lock.json
+next-env.d.ts
+
+# Markdown documentation is formatted by hand; keep the approved Phase 0 baseline byte-stable.
+*.md

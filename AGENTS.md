@@ -3,7 +3,7 @@
 These rules apply to every AI coding agent or assistant working in this repository. They override convenience. When in doubt, stop and ask the owner.
 
 **Owner:** Nicolas Familia (GitHub `NickyBFam`)
-**Current approved phase:** Phase 0 — Product Specification & Architecture, completed and approved 2026-09-29. Phase 1 has not been approved to begin. The authoritative status is in `docs/PHASES.md`.
+**Current approved phase:** Phase 1 — Application Foundation (approved to begin 2026-09-29; awaiting owner review, not yet complete). Phase 0 is approved and closed. The authoritative status is in `docs/PHASES.md`.
 **Canonical branch:** `main` (configured by the owner; see `docs/DECISIONS.md` D-017)
 **License:** All rights reserved (D-018)
 
@@ -68,3 +68,21 @@ Before doing any work, read:
 
 28. **Do not add a license.** The project is all rights reserved (D-018). Do not add `LICENSE` files, license headers, or open-source/open-data terms unless the owner explicitly approves one.
 29. **Commercial relationships never influence data.** Sponsorship, affiliate, payment, or partnership data must never affect benchmark results, rankings, derived scores, methodology, or recommendations. Any sponsored or affiliate content must be clearly disclosed and structurally separated (D-015).
+
+## Working in the application (Phase 1 onward)
+
+30. Use npm. Run `npm run validate` (lint, format check, typecheck, tests, build) before reporting work as complete.
+31. Keep `src/lib/product-areas.ts` structural only: descriptions and phase references, never models, providers, prices, scores, or rankings.
+32. Prefer Server Components; add `"use client"` only where interactivity requires it.
+33. Pin dependency versions exactly and record significant tooling choices in `docs/DECISIONS.md`.
+34. Next.js 16 differs from older versions. Read the bundled docs in `node_modules/next/dist/docs/` before using a Next.js API.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
