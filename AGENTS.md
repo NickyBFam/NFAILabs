@@ -3,7 +3,7 @@
 These rules apply to every AI coding agent or assistant working in this repository. They override convenience. When in doubt, stop and ask the owner.
 
 **Owner:** Nicolas Familia (GitHub `NickyBFam`)
-**Current approved phase:** Phase 2 — Database & Data Architecture (approved to begin 2026-09-29; acceptance complete and approved by the owner 2026-09-29, closing with the owner's baseline commit). Phase 3 has not been approved to begin. Phases 0 and 1 are approved and closed. The authoritative status is in `docs/PHASES.md`.
+**Current approved phase:** Phase 3 — Admin & Data Management (approved to begin by the owner 2026-09-29 from the Phase 2 baseline `2375222`). Phase 4 has not been approved to begin. Phases 0, 1 and 2 are approved and closed. The authoritative status is in `docs/PHASES.md`.
 **Canonical branch:** `main` (configured by the owner; see `docs/DECISIONS.md` D-017)
 **License:** All rights reserved (D-018)
 
@@ -16,6 +16,7 @@ Before doing any work, read:
 4. `docs/METHODOLOGY.md` and `docs/DATA_SOURCES.md` — before touching any data, benchmark, or ranking logic.
 5. `docs/ARCHITECTURE.md` — before making structural or technology choices.
 6. `docs/DATABASE.md` — before touching migrations, the data-access layer, or database tests.
+7. `docs/ADMIN.md` — before touching authentication, `/admin`, roles, the approval workflow, or admin mutations and queries.
 
 ## Phase discipline
 
@@ -83,9 +84,17 @@ Before doing any work, read:
 35. Schema changes are new files in `supabase/migrations/`. Never edit a migration once the owner has approved it as a baseline, and never write down migrations (D-026). Target PostgreSQL 17; no PostgreSQL 18-only features.
 36. Every new fact table registers with `nfai_register_fact_table()` (D-027). Every new table enables RLS, and every new function revokes EXECUTE from `public`, `anon` and `authenticated` unless it is deliberately public. `select * from public.nfai_security_audit()` must return no rows; the tests enforce it (D-030).
 37. Never use `on delete cascade` into catalog, measurement, pricing, provenance or audit data. Corrections supersede; changes in the world are new effective-dated rows.
-38. Application code reads the database only through `src/lib/data` repositories. Only modules that `import "server-only"` may read `SUPABASE_SERVICE_ROLE_KEY`; never prefix it with `NEXT_PUBLIC_`.
+38. Public application code reads the database only through `src/lib/data` repositories. Admin code reads and writes only through `src/lib/auth` and `src/lib/admin/{queries,mutations}`, using the signed-in admin's own JWT (D-034). Only modules that `import "server-only"` may read `SUPABASE_SERVICE_ROLE_KEY`; never prefix it with `NEXT_PUBLIC_`, and never use it in the admin path.
 39. `supabase/seed.sql` and database fixtures are synthetic only (rule 11). Never run migrations, resets or writes against a remote Supabase project without the owner's explicit approval.
 40. Never commit `.env.local`, `supabase/.temp/`, or any key or password. Documentation may name a project ref but never a key value.
+
+## Working in the admin system (Phase 3 onward)
+
+41. Every admin mutation is one call to an `nfai_admin_*` SQL function with the admin's own JWT. Never send an actor id, role or target publication state from the client, never write fact tables or `publication_state` directly, and never bypass the workflow functions or the provenance gate.
+42. Every admin page, server action and route handler checks authentication and permission on the server. The proxy is never the only check. Fail closed.
+43. Code checks permissions, never role names. New permissions, roles, approval classes and `SECURITY DEFINER` functions arrive only by migration with a recorded decision, and must be allow-listed in `nfai_security_audit()`.
+44. Every new fact table gets an approval policy in the same migration that registers it (D-031).
+45. Admin error responses never include database messages, SQL, stack traces, keys or tokens. Admin identities and test users in fixtures are synthetic.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
 import { getSiteUrl, isIndexingAllowed } from "@/lib/env";
 import { siteConfig } from "@/lib/site";
 import "@/styles/globals.css";
@@ -45,11 +43,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         >
           Skip to main content
         </a>
-        <SiteHeader />
-        <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
-          {children}
-        </main>
-        <SiteFooter />
+        {children}
       </body>
     </html>
   );

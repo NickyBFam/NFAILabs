@@ -19,7 +19,7 @@ describe("robots", () => {
     vi.stubEnv("NFAI_ALLOW_INDEXING", "true");
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://example.test");
     const result = robots();
-    expect(result.rules).toEqual({ userAgent: "*", allow: "/" });
+    expect(result.rules).toEqual({ userAgent: "*", allow: "/", disallow: "/admin" });
     expect(result.sitemap).toBe("https://example.test/sitemap.xml");
   });
 });

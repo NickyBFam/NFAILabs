@@ -90,3 +90,21 @@ export async function asRole<T>(
   });
   return result as T;
 }
+
+/**
+ * Runs `fn` inside a transaction as the database owner (the role migrations and the seed
+ * run as), rolled back afterwards. Phase 3 (D-034) lets only the admin workflow functions
+ * and the owner move rows past draft/extracted, so tests of the Phase 2 lifecycle and
+ * provenance rules drive transitions this way; the rules they test still apply.
+ */
+export async function asOwner<T>(db: PGlite, fn: (tx: Transaction) => Promise<T>): Promise<T> {
+  let result: T | undefined;
+  await db.transaction(async (tx) => {
+    try {
+      result = await fn(tx);
+    } finally {
+      await tx.rollback();
+    }
+  });
+  return result as T;
+}

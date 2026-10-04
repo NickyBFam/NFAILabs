@@ -29,6 +29,8 @@ This document records the shared conventions every Phase 2 migration and data-ac
   | `0003_provenance_history.sql` | Sources, documents, observations, provenance links, publication lifecycle, supersession, publication events, audit log; registers the 0001/0002 tables |
   | `0004_security_rls.sql` | Grants, RLS policies, visibility helpers, `nfai_security_audit()` |
   | `0005_effective_period_integrity.sql` | Exclusion constraints: no overlapping published effective periods (D-029) |
+  | `0006_admin_identity.sql` | Phase 3: admin identities keyed by the Auth user id, identity functions (D-033) |
+  | `0007_admin_roles_workflow.sql` | Phase 3: roles, permissions, approval policies, workflow actions, the `nfai_admin_*` workflow and read API, the publication-state guard, and the replaced `nfai_security_audit()` (D-031, D-034, D-035) |
 
 - A later migration may `alter` objects from an earlier one; an earlier migration never references objects created later.
 - No `begin`/`commit` in files (the CLI wraps each file in a transaction). No `drop` of another thread's objects.
@@ -57,7 +59,7 @@ These are the coordinator's defaults so the four migrations fit together. A spec
 
 ## 5. Roles and environment
 
-- Supabase API roles: `anon` (public, read published data only), `authenticated` (no extra rights in Phase 2; admin roles arrive in Phase 3), `service_role` (bypasses RLS; server/worker only).
+- Supabase API roles: `anon` (public, read published data only), `authenticated` (reads the public record; since Phase 3 may also execute the `nfai_admin_*` functions, which authorize admins themselves, D-034), `service_role` (bypasses RLS; server/worker only; since Phase 3 cannot move rows past draft/extracted or write admin tables).
 - Environment variables (`.env.example`): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (public by design), `SUPABASE_SERVICE_ROLE_KEY` (secret, server-only; only modules that `import "server-only"` may read it).
 - All are optional: the app must build and render without them.
 
@@ -106,6 +108,7 @@ audit_log: every insert/update/delete on registered and provenance tables (inter
 | Provenance | `sources`, `source_documents`, `source_document_locations`, `source_observations`, `source_archives`, `provenance_links` | Append-only (links revocable once) |
 | Workflow & history | `publication_states`, `publication_state_transitions`, `fact_tables`, `supersessions`, `publication_events` | Vocabulary changed only by migration; logs append-only |
 | Audit | `audit_log` | Append-only, internal |
+| Admin (Phase 3, `ADMIN.md`) | `admin_identities`, `admin_roles`, `admin_permissions`, `admin_role_permissions`, `admin_role_assignments`, `fact_approval_policies`, `workflow_actions` | Identities never deleted (disabled); role assignments append-only with one-time revocation; vocabularies change only by migration; workflow actions append-only. All internal: RLS on, no API grants except an identity reading its own row |
 | Derived, editorial, ingestion | none yet | Phases 5, 6, 11 and 12 add these as new migrations |
 
 Views (`security_invoker`): `provenance_link_details` (public, column-limited), `supersession_chains` (public), `publication_intervals` (internal).

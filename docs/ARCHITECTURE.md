@@ -73,6 +73,7 @@ Key property: **the public website and API are read-mostly views over approved d
 - Every write produces an audit record (who, what, when, before/after, reason).
 - Separation of proposal and approval: an approver cannot silently approve their own high-impact change once more than one approver exists (policy to be set in Phase 3).
 - Placement (same Next.js app under a protected route vs separate app) decided in Phase 3 (open question in `DECISIONS.md`).
+- **Phase 3 design:** same Next.js app under `/admin` (D-009); Supabase Auth, invitation only, cookie sessions (D-032); identities keyed by the Auth user id (D-033); five roles with permission checks in SQL (D-035); every admin read and write is a call to a `SECURITY DEFINER` workflow function made with the admin's own JWT, so the database authorizes, attributes and enforces the approval model itself (D-031, D-034). Contract and reference: `ADMIN.md`.
 
 ### 3.3 Database
 - PostgreSQL via Supabase. Relational model reflecting `MASTER_SPEC.md` §3.

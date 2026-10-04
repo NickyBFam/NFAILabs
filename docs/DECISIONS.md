@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document | Decision Log |
-| Phase | Phase 0 — Product Specification & Architecture (D-001 to D-018); Phase 1 — Application Foundation (D-019 to D-024); Phase 2 — Database & Data Architecture (D-025 onward) |
+| Phase | Phase 0 — Product Specification & Architecture (D-001 to D-018); Phase 1 — Application Foundation (D-019 to D-024); Phase 2 — Database & Data Architecture (D-025 to D-030); Phase 3 — Admin & Data Management (D-009 resolution, D-031 onward) |
 | Last updated | 2026-09-29 |
 
 Architectural and product decisions are recorded here. Major decisions are never made silently.
@@ -16,6 +16,7 @@ Architectural and product decisions are recorded here. Major decisions are never
 - Phase 0 was approved by the owner on 2026-09-29. All Phase 0 decisions are `Accepted` except D-009, which remains `Open` and is deferred to Phase 3.
 - Phase 1 decisions D-019 to D-024 were accepted by the owner on 2026-09-29 during Phase 1 final acceptance.
 - Phase 2 decisions D-025 to D-030 were accepted by the owner on 2026-09-29 during Phase 2 final acceptance. D-028 was accepted in its revised form (T4-only evidence never satisfies the publication gate).
+- Phase 3 (approved to begin by the owner on 2026-09-29): the D-009 resolution and D-031 to D-035 are `Proposed` until the owner accepts Phase 3. Implementation proceeds on them.
 
 ## Index
 
@@ -29,7 +30,7 @@ Architectural and product decisions are recorded here. Major decisions are never
 | D-006 | Web hosting on Vercel | Accepted |
 | D-007 | Background workers run outside Vercel functions | Accepted |
 | D-008 | Evaluation infrastructure is isolated from the web platform | Accepted |
-| D-009 | Admin system placement | Open (deferred to Phase 3) |
+| D-009 | Admin system placement | Proposed (Phase 3 resolution) |
 | D-010 | Append-only, effective-dated history for key records | Accepted |
 | D-011 | Human approval before publishing ingested facts | Accepted |
 | D-012 | Ranking weights set by documented process, not in Phase 0 | Accepted |
@@ -50,7 +51,12 @@ Architectural and product decisions are recorded here. Major decisions are never
 | D-027 | Seven-state publication lifecycle shared by every fact table | Accepted |
 | D-028 | Provenance model and the publication provenance rule | Accepted |
 | D-029 | Published effective periods may not overlap | Accepted |
-| D-030 | Database access model: read-only public record, server-only service role | Accepted |
+| D-030 | Database access model: read-only public record, server-only service role | Accepted (extended by D-034) |
+| D-031 | Approval model: standard and separated approval classes | Proposed |
+| D-032 | Admin authentication: Supabase Auth, invitation only, cookie sessions | Proposed |
+| D-033 | Admin identity: Auth user id as the permanent actor id | Proposed |
+| D-034 | Admin writes and reads through SQL workflow functions called with the admin's own JWT | Proposed |
+| D-035 | Minimal roles with permission checks in the database | Proposed |
 
 ---
 
@@ -119,12 +125,12 @@ Architectural and product decisions are recorded here. Major decisions are never
 - **Consequences:** Separate infrastructure cost and operations from Phase 14 onward. The owner approved the isolation requirement; **no evaluation hosting provider has been chosen**, and selection is deferred to Phase 14 and requires a new decision approved by the owner.
 
 ## D-009 — Admin system placement
-- **Status:** Open (deferred to Phase 3 by owner, 2026-09-29)
-- **Context:** Admin can live inside the main Next.js app behind authentication, or as a separate app/deployment.
-- **Decision:** Not yet made. The owner deferred this decision to Phase 3; it must be decided at the start of Phase 3.
-- **Rationale:** Depends on role model, security needs, and team size.
-- **Alternatives considered:** Same app under protected routes (simpler, larger attack surface on public deployment); separate app (stronger isolation, more overhead).
-- **Consequences:** Affects Phase 1 routing structure only minimally if decided by Phase 3.
+- **Status:** Proposed (Phase 3 resolution, 2026-09-29; was Open, deferred to Phase 3 by the owner). The owner's Phase 3 brief named this as the preferred default.
+- **Context:** Admin can live inside the main Next.js app behind authentication, or as a separate app/deployment. Phase 3 fixed the role model (D-035), authentication (D-032) and a database-enforced write path (D-034), so the security boundary no longer depends on which deployment serves the pages.
+- **Decision:** Admin lives in the same Next.js application under `/admin`. Public pages move into a `src/app/(site)` route group with the public header and footer; `/admin` has its own layout without public navigation. Every admin page and action checks the session and permission on the server; the Next.js proxy (`src/proxy.ts`) only refreshes sessions and redirects anonymous requests and is never the only check. `/admin` is `noindex`, disallowed in `robots.txt`, absent from the sitemap and rendered dynamically. Contract: `ADMIN.md`.
+- **Rationale:** One codebase, one deployment and shared components; the real protection is in the database (D-034), which a separate deployment would not strengthen. A second app would add build, auth and deployment overhead for a team of one or a few people.
+- **Alternatives considered:** Separate app or deployment (stronger network isolation, more overhead; can be revisited in Phase 22 if the admin surface grows); separate repository (rejected: duplicated schema and types).
+- **Consequences:** The public deployment serves admin routes, so admin pages must never be statically cached, and the admin surface is part of the Phase 22 security audit. URLs of public pages are unchanged.
 
 ## D-010 — Append-only, effective-dated history for key records
 - **Status:** Accepted (2026-09-29, Phase 0 approval)
@@ -303,4 +309,46 @@ Architectural and product decisions are recorded here. Major decisions are never
 - **Rationale:** Least privilege with two independent layers (grants and RLS), and a test-enforced self-audit so later migrations cannot silently widen access.
 - **Alternatives considered:** Exposing only views to the API (more objects to keep in sync; RLS still needed on base tables).
 - **Consequences:** New tables and functions in later phases must enable RLS and revoke default EXECUTE, or the self-audit (and the tests) fail.
+- **Extended by D-034 (Phase 3):** `authenticated` gains EXECUTE on the reviewed `nfai_admin_*` workflow and read functions, which check admin identity and permission themselves; `nfai_security_audit()` is replaced to allow exactly those. service_role can no longer move rows past `draft`/`extracted`.
 
+---
+
+## D-031 — Approval model: standard and separated approval classes
+- **Status:** Proposed (Phase 3, 2026-09-29)
+- **Context:** D-011 requires human approval before publication; D-027 left the two-person rule to Phase 3. The owner prefers single qualified approval for ordinary low-risk facts and separation of duties for high-impact records, and a simpler safe rule if selective separation proved too complex.
+- **Decision:** Every registered fact table has an approval class in `fact_approval_policies`. **standard**: one person holding the needed permissions may validate and publish, including a draft they wrote. **separated**: the publisher must differ from whoever validated the current review cycle and from anyone who created or edited the row's content (from `audit_log`), so at least two people are involved and no one satisfies both approvals. It applies to publish and to the replacement published by a supersession. Withdrawal needs one publisher and a reason. Separated tables: `benchmark_results`, `pricing_records`, `model_capabilities`, `evaluation_configurations`, `benchmark_metrics`, `benchmark_versions`. "Submit for review" is a workflow action (`workflow_actions`), not a new publication state; a submitted draft cannot be edited. The provenance gate (D-028) is unchanged and has no T4 override.
+- **Rationale:** Benchmark results, prices, capabilities and the definitions that decide comparability (configurations, metrics, benchmark versions) feed rankings and derived scores (`METHODOLOGY.md`), so one person's mistake there does the most damage. Catalog structure (providers, model versions, releases) is easier to verify and correct. The rule is enforced in SQL, so it holds for every client.
+- **Alternatives considered:** Single-person approval for everything (simplest; no protection for high-impact data); two-person approval for everything (safe, but blocks all work while there is one operator); publisher-differs-from-validator only (lets an author publish their own high-impact fact after a colleague validates it).
+- **Consequences:** With one qualified person, separated records cannot be published until a second person exists (intended). Changing a table's class is a data row in a new migration plus a decision. Any fact table registered later must get a policy in the same migration; `nfai_security_audit()` reports a missing one.
+
+## D-032 — Admin authentication: Supabase Auth, invitation only, cookie sessions
+- **Status:** Proposed (Phase 3, 2026-09-29)
+- **Context:** Phase 3 needs admin sign-in. Phase 2 already relies on Supabase for data, JWT claims and RLS.
+- **Decision:** Supabase Auth with email and password. Sessions live in httpOnly, `SameSite=Lax` cookies (`Secure` in production) managed by `@supabase/ssr` 0.12.7 (pinned exactly). Server code verifies every request with `auth.getUser()` against the Auth server and never trusts cookie contents alone. Public signup is disabled (`supabase/config.toml` and the dashboard); admins are invited by the owner and given an identity by an administrator. Logout is a POST server action. Session expiry follows Supabase JWT expiry and refresh-token rotation. The Next.js 16 proxy (`src/proxy.ts`, formerly middleware) refreshes sessions and redirects anonymous `/admin` requests; pages and actions re-check.
+- **Rationale:** No second identity system; JWTs issued by Supabase Auth are what the database already understands (`auth.uid()`), which D-034 relies on. `@supabase/ssr` is Supabase's supported cookie integration for Next.js and is safer than hand-written cookie and refresh handling.
+- **Alternatives considered:** Clerk or another provider (second identity system; JWT bridging into RLS); magic links only (depends on email delivery for every sign-in; can be added later); hand-rolled cookie handling with supabase-js (more security-sensitive code to own).
+- **Consequences:** One new runtime dependency. The owner must disable signups in the dashboard of every Supabase project. Multi-factor authentication is not required in Phase 3 (known limitation for Phase 22).
+
+## D-033 — Admin identity: Auth user id as the permanent actor id
+- **Status:** Proposed (Phase 3, 2026-09-29)
+- **Context:** Audit and publication events already record the JWT `sub` as the actor id (Phase 2). Email addresses change and must not be identities.
+- **Decision:** `admin_identities.id` is the Supabase Auth user id (immutable), with display name, `active`/`disabled` status, disable time and reason, and metadata. There is no foreign key to `auth.users`. Identities are never deleted, only disabled. Writes go through `nfai_admin_*` functions requiring `manage_admins`; nobody changes their own status or roles; service_role cannot insert or modify identities. The first administrator is created by the owner with SQL as the database owner.
+- **Rationale:** One id links Auth, audit and publication history; history survives disabling or deleting an Auth user; a leaked service key cannot mint an administrator.
+- **Alternatives considered:** A separate internal uuid mapped to the Auth id (an extra join and a second id in logs, with no benefit while Supabase Auth is the only provider); email as identity (mutable, personal data in audit keys).
+- **Consequences:** Moving away from Supabase Auth later would need an id mapping for historical actors. Disabled users keep their attribution in history.
+
+## D-034 — Admin writes and reads through SQL workflow functions called with the admin's own JWT
+- **Status:** Proposed (Phase 3, 2026-09-29). Extends D-030.
+- **Context:** Phase 2 gave `authenticated` no rights and let service_role run the workflow. Admin writes must be attributed to the real person and authorized even if application code has a bug.
+- **Decision:** Every admin mutation is one call to one `nfai_admin_*` function, made by server code with the signed-in admin's own JWT (role `authenticated`). The functions are `SECURITY DEFINER` with an empty `search_path` and EXECUTE for `authenticated` only; each derives the actor from `auth.uid()` (overwriting any caller-set `nfai.actor_*`), refuses unknown or disabled identities, checks the permission and separation of duties, validates arguments against per-table column allow-lists, then uses the Phase 2 primitives, whose triggers still enforce lifecycle, frozen content and provenance. Admin reads of internal data use definer read functions gated on `view_admin` / `view_audit` that return explicit columns. A guard trigger on every fact table refuses publication-state changes beyond `draft`/`extracted` from `service_role`, `authenticated` or `anon` outside these functions. The service-role key is not used anywhere in the admin path. `nfai_security_audit()` is replaced to allow exactly these functions. Errors: `NFA01` not an admin, `NFA02` disabled, `NFA03` missing permission, `NFA04` separation of duties, `NFA05` workflow precondition; server code maps them to generic messages.
+- **Rationale:** The actor comes from a JWT verified by the database, so it cannot be forged by a client or misattributed by server code; authorization lives next to the data and is tested directly in SQL; calling a function directly from a browser gives the same result as through the app.
+- **Alternatives considered:** Service role with an actor-id parameter after a TypeScript check (authorization and attribution depend on application code alone; a leaked key could publish); RLS write policies for admins on every table (policies cannot express workflow transitions or separation of duties cleanly).
+- **Consequences:** More `SECURITY DEFINER` code, reviewed and allow-listed in the self-audit. Phase 2 tests and `remote_checks.sql` that published as service_role now go through the workflow or run as the owner. Future ingestion (Phase 12) can still insert `extracted` rows with the service role but never approve them.
+
+## D-035 — Minimal roles with permission checks in the database
+- **Status:** Proposed (Phase 3, 2026-09-29)
+- **Context:** The owner asked for a small role set where permissions matter more than labels.
+- **Decision:** Five roles: `viewer`, `editor`, `reviewer`, `publisher`, `administrator`, bundling the permissions `view_admin`, `edit_draft`, `submit_review`, `validate_fact`, `reject_fact`, `publish_fact`, `supersede_fact`, `withdraw_fact`, `view_audit`, `manage_admins` (matrix: `ADMIN.md` §4). A person may hold several roles. The administrator role manages access and does not publish. Assignments are append-only with revocation history. Status and assignments are read on every call, so a revocation or disable takes effect on the next request.
+- **Rationale:** Enough to separate drafting, reviewing, publishing and access management; small enough to reason about and test as a full matrix.
+- **Alternatives considered:** Per-table or per-fact-type roles (many micro-roles; revisit only with a real need); an owner "superuser" role that bypasses workflow (defeats separation of duties).
+- **Consequences:** Code checks permissions, never role names. New permissions arrive by migration with a decision.

@@ -5,7 +5,7 @@
 | Document | Phases & Roadmap |
 | Phase | Phase 0 — Product Specification & Architecture |
 | Status | Approved by owner 2026-09-29 (Phase 0 baseline) |
-| Current approved phase | **Phase 2 — Database & Data Architecture**: approved to begin by the owner on 2026-09-29 from the approved Phase 1 baseline `0baa9b1`. **Phase 2 acceptance is complete** (2026-09-29): every acceptance criterion is met, D-025 to D-030 are Accepted, and validation on a real Supabase development project passed. Phase 2 becomes the data baseline with the owner's Phase 2 commit. Phase 3 has not been approved to begin. Phase 1 is approved and closed (baseline `0baa9b1`). Phase 0 is approved and closed (baseline `4d3e2ef`). |
+| Current approved phase | **Phase 3 — Admin & Data Management**: approved to begin by the owner on 2026-09-29 from the approved Phase 2 baseline `2375222`. In progress. Phase 4 has not been approved to begin. Phase 2 is approved and closed (baseline `2375222`). Phase 1 is approved and closed (baseline `0baa9b1`). Phase 0 is approved and closed (baseline `4d3e2ef`). |
 | Canonical branch | `main` (D-017) |
 | Last updated | 2026-09-29 |
 
@@ -112,6 +112,11 @@
 - **Acceptance criteria:** No fact can be published without a source and approval; every write is audited; unauthorized users cannot access admin.
 - **Tests/review:** Auth/role tests; approval flow e2e; audit completeness tests; security review of admin surface.
 - **Completion gate:** Owner approval; admin security checklist passed.
+- **Status (2026-10-03): implementation complete locally; remote validation and owner approval pending.** Started from Phase 2 baseline `2375222`. Contract and reference: `ADMIN.md`. Decisions (Proposed until acceptance): D-009 admin inside the same app under `/admin`; D-031 approval model (standard and separated classes); D-032 Supabase Auth, invitation only, cookie sessions; D-033 Auth user id as identity; D-034 every admin read and write through `nfai_admin_*` SQL functions called with the admin's own JWT; D-035 five roles, permissions checked in SQL.
+  - Delivered: migrations `0006_admin_identity.sql` and `0007_admin_roles_workflow.sql`; auth (`src/lib/auth`, `src/proxy.ts`, `/admin/auth/*`); permission and workflow vocabularies (`src/lib/admin/permissions`, `src/lib/admin/workflow`); mutation and query layers (`src/lib/admin/mutations`, `src/lib/admin/queries`); admin UI (`/admin`, `/admin/review`, `/admin/models`, `/admin/benchmarks`, `/admin/pricing`, `/admin/sources`, `/admin/audit`, `/admin/access`, record create, view and edit pages); public pages moved into the `(site)` route group (URLs unchanged); `/admin` disallowed in `robots.txt`; `@supabase/ssr` 0.12.7.
+  - Acceptance criteria: no fact can be published without a T1–T3 source (D-028, unchanged) and an approval through the workflow functions, since service_role, anon and authenticated cannot move rows past draft/extracted directly; every write is audited with the signed-in admin as actor; unauthenticated and unauthorized users cannot reach `/admin` or call the admin API. Covered by database tests in PGlite and by `remote_checks.sql`.
+  - Validated locally (2026-10-03): `npm run validate` passes (lint, typecheck, format check, 427 tests in 40 files, build); `npm ci` accepts the lockfile; `remote_checks.sql` passes every check on PGlite, including the Phase 3 checks; no admin function name or service-role key appears in the client bundles.
+  - Remote validation: pending, to be run by the owner on NFAI Labs Dev (`ADMIN.md` §9).
 
 ## Phase 4 — Provider & Model Catalog
 - **Objective:** Publish sourced provider and model version pages.

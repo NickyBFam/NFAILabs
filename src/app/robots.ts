@@ -7,7 +7,8 @@ export default function robots(): MetadataRoute.Robots {
   }
 
   return {
-    rules: { userAgent: "*", allow: "/" },
+    // The admin area is never crawled (D-009); every admin page also sends noindex.
+    rules: { userAgent: "*", allow: "/", disallow: "/admin" },
     sitemap: new URL("/sitemap.xml", getSiteUrl()).toString(),
   };
 }

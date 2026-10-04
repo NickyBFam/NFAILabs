@@ -1,11 +1,12 @@
 /**
- * Phase 2 integration checks across all migrations (0001-0005) and the synthetic seed.
+ * Phase 2 integration checks across all migrations and the synthetic seed.
  * Each block maps to a Phase 2 acceptance criterion in docs/PHASES.md. Component-level
  * behaviour is covered by the data-layer tests in src/lib/data.
  */
 import type { PGlite, Transaction } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  asOwner,
   asRole,
   createTestDatabase,
   isValidMigrationFileName,
@@ -29,6 +30,15 @@ const SOURCE_DOCUMENT = "5eed0000-0000-4000-8000-000000000002";
 /** Runs statements as service_role and forces deferred (commit-time) checks, then rolls back. */
 function asServiceChecked<T>(db: PGlite, fn: (tx: Transaction) => Promise<T>): Promise<T> {
   return asRole(db, "service_role", async (tx) => {
+    const result = await fn(tx);
+    await tx.exec("set constraints all immediate");
+    return result;
+  });
+}
+
+/** Runs statements as the database owner and forces deferred checks, then rolls back. */
+function asOwnerChecked<T>(db: PGlite, fn: (tx: Transaction) => Promise<T>): Promise<T> {
+  return asOwner(db, async (tx) => {
     const result = await fn(tx);
     await tx.exec("set constraints all immediate");
     return result;
@@ -64,6 +74,8 @@ describe("Phase 2 database integration", () => {
         "0003_provenance_history.sql",
         "0004_security_rls.sql",
         "0005_effective_period_integrity.sql",
+        "0006_admin_identity.sql",
+        "0007_admin_roles_workflow.sql",
       ]);
       expect(files.every(isValidMigrationFileName)).toBe(true);
     });
@@ -123,7 +135,7 @@ describe("Phase 2 database integration", () => {
 
     it("refuse to validate or publish a result that has no source", async () => {
       await expect(
-        asServiceChecked(db, async (tx) => {
+        asOwnerChecked(db, async (tx) => {
           const { rows } = await insertResult(tx, ALPHA);
           const id = (rows[0] as { id: string }).id;
           await tx.query(
@@ -135,7 +147,7 @@ describe("Phase 2 database integration", () => {
     });
 
     it("accept a sourced result through the review workflow", async () => {
-      const state = await asServiceChecked(db, async (tx) => {
+      const state = await asOwnerChecked(db, async (tx) => {
         const { rows } = await insertResult(tx, ALPHA);
         const id = (rows[0] as { id: string }).id;
         await tx.query(
@@ -158,6 +170,24 @@ describe("Phase 2 database integration", () => {
         return after.rows[0]?.s;
       });
       expect(state).toBe("published");
+    });
+
+    it("let only the admin workflow move a result past draft, never the service role (D-034)", async () => {
+      await expect(
+        asServiceChecked(db, async (tx) => {
+          const { rows } = await insertResult(tx, ALPHA);
+          const id = (rows[0] as { id: string }).id;
+          await tx.query(
+            `insert into public.provenance_links (subject_table, subject_id, source_document_id, role)
+             values ('public.benchmark_results', $1, $2, 'primary')`,
+            [id, SOURCE_DOCUMENT],
+          );
+          await tx.query(
+            "select public.nfai_transition('public.benchmark_results', $1, 'validated')",
+            [id],
+          );
+        }),
+      ).rejects.toThrow(/admin workflow functions/);
     });
 
     it("never let a published result be edited or deleted", async () => {
@@ -197,7 +227,7 @@ describe("Phase 2 database integration", () => {
 
     it("reject two published prices of one series in effect at the same time", async () => {
       await expect(
-        asServiceChecked(db, async (tx) => {
+        asOwnerChecked(db, async (tx) => {
           const { rows } = await tx.query<{ id: string }>(
             `insert into public.pricing_records
                (model_version_id, deployment_channel_id, billing_dimension, currency, price_amount, unit,

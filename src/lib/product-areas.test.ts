@@ -33,7 +33,7 @@ describe("product areas configuration", () => {
 
   it("has a page file for every configured route", () => {
     for (const area of productAreas) {
-      const pageFile = path.join(process.cwd(), "src", "app", area.slug, "page.tsx");
+      const pageFile = path.join(process.cwd(), "src", "app", "(site)", area.slug, "page.tsx");
       expect(existsSync(pageFile), `missing ${pageFile}`).toBe(true);
     }
   });

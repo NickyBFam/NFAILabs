@@ -6,7 +6,7 @@
  */
 import type { PGlite, Transaction } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { asRole, createTestDatabase } from "./harness";
+import { asOwner, createTestDatabase } from "./harness";
 
 type Tier = "T1" | "T2" | "T3" | "T4" | "T5";
 
@@ -42,9 +42,13 @@ describe("publication provenance gate", () => {
     await db.close();
   });
 
-  /** As service_role: create a draft provider, attach links, try to validate and publish. */
+  /**
+   * As the database owner: create a draft provider, attach links, try to validate and publish.
+   * (Since Phase 3 only the admin workflow functions and the owner may move rows past draft;
+   * the gate applies to both. The admin path is tested in the Phase 3 admin tests.)
+   */
   function publishWith(links: { tier: Tier; role: string; lowConfidence?: boolean }[]) {
-    return asRole(db, "service_role", async (tx: Transaction) => {
+    return asOwner(db, async (tx: Transaction) => {
       const { rows } = await tx.query<{ id: string }>(
         `insert into public.providers (slug, name) values ('gate-provider', 'Gate Test Provider') returning id`,
       );
@@ -127,7 +131,7 @@ describe("publication provenance gate", () => {
 
   it("stops a published fact from losing its last T1-T3 support", async () => {
     await expect(
-      asRole(db, "service_role", async (tx) => {
+      asOwner(db, async (tx) => {
         const { rows } = await tx.query<{ id: string }>(
           `insert into public.providers (slug, name) values ('gate-provider', 'Gate Test Provider') returning id`,
         );
